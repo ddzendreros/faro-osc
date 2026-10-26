@@ -2,7 +2,7 @@
 
 Agente de IA open source que responde consultas legales a organizaciones de la sociedad civil (OSC) en México, citando el artículo exacto y la versión vigente de la ley. Cada OSC tiene su propio agente, personalizado con su perfil y sus documentos, y recibe un digest semanal con los cambios legales y noticias que le aplican.
 
-Estado: en construcción. Hay un visor del corpus con búsqueda y citas (la demo); el agente que responde preguntas todavía no existe. Plan por etapas en [docs/demo.md](docs/demo.md).
+Estado: en construcción. Hay un visor del corpus con búsqueda y citas, en línea en https://faro-osc-demo.vercel.app; el agente que responde preguntas todavía no existe. Plan por etapas en [docs/demo.md](docs/demo.md).
 
 ## Estructura
 

@@ -12,6 +12,9 @@ Estática y sin secretos. Lee un snapshot del texto oficial (`apps/web/data/corp
 - Una página por artículo, con su cita y la fecha del texto, lista para copiar.
 - Lo que **no** hace: responder preguntas, personalizar, avisar de reformas, mostrar versiones anteriores.
 
+En línea: https://faro-osc-demo.vercel.app (proyecto `faro-osc-demo` en Vercel). Se despliega a mano con
+la CLI; el proyecto no está conectado a GitHub, así que un `git push` no lo actualiza por sí solo.
+
 Actualizar el texto y volver a desplegar:
 
 ```
