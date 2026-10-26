@@ -1,6 +1,6 @@
 import { and, eq, gt, isNull, lte, or, sql } from "drizzle-orm";
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
-import { crearBaseDePrueba, mensajeDeError } from "./base-de-prueba.test-util.js";
+import { crearBaseDePrueba, mensajeDeError } from "./testing.js";
 import { conOrg } from "./org.js";
 import {
   alertas,

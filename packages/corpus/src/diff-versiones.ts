@@ -1,3 +1,4 @@
+import { textoCanonico } from "./huella.js";
 import type { ArticuloParseado } from "./parse-articulos.js";
 
 export interface CambioArticulo {
@@ -13,9 +14,6 @@ export interface DiffLey {
   eliminados: ArticuloParseado[];
 }
 
-/** Compara espacios y saltos de línea de forma tolerante: el reformateo del PDF no es una reforma. */
-const canonico = (t: string) => t.replace(/\s+/g, " ").trim();
-
 export function diffVersiones(
   vigentes: ArticuloParseado[],
   nuevos: ArticuloParseado[],
@@ -29,7 +27,7 @@ export function diffVersiones(
     const previo = porNumero.get(nuevo.numero);
     if (!previo) {
       diff.agregados.push(nuevo);
-    } else if (canonico(previo.texto) !== canonico(nuevo.texto)) {
+    } else if (textoCanonico(previo.texto) !== textoCanonico(nuevo.texto)) {
       diff.modificados.push({
         numero: nuevo.numero,
         anterior: previo.texto,
