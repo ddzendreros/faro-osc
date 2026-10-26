@@ -1,0 +1,1585 @@
+{
+  "id": "16a9e767-0f50-41c7-988b-f778a328341b",
+  "prevId": "f1f6bae6-a7e9-47e4-87f8-52cbe6ad9c2a",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.articulos": {
+      "name": "articulos",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "ley_id": {
+          "name": "ley_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "numero": {
+          "name": "numero",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "texto": {
+          "name": "texto",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "texto_sha256": {
+          "name": "texto_sha256",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "vigente_desde": {
+          "name": "vigente_desde",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "vigente_hasta": {
+          "name": "vigente_hasta",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reforma_id": {
+          "name": "reforma_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "estado": {
+          "name": "estado",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'publicado'"
+        },
+        "tags": {
+          "name": "tags",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::text[]"
+        },
+        "embedding": {
+          "name": "embedding",
+          "type": "vector(1024)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "embedding_modelo": {
+          "name": "embedding_modelo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "busqueda": {
+          "name": "busqueda",
+          "type": "tsvector",
+          "primaryKey": false,
+          "notNull": false,
+          "generated": {
+            "type": "stored",
+            "as": "to_tsvector('spanish', texto)"
+          }
+        }
+      },
+      "indexes": {
+        "articulos_ley_numero_idx": {
+          "name": "articulos_ley_numero_idx",
+          "columns": [
+            {
+              "expression": "ley_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "numero",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "articulos_busqueda_idx": {
+          "name": "articulos_busqueda_idx",
+          "columns": [
+            {
+              "expression": "busqueda",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "gin",
+          "concurrently": false
+        },
+        "articulos_tags_idx": {
+          "name": "articulos_tags_idx",
+          "columns": [
+            {
+              "expression": "tags",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "gin",
+          "concurrently": false
+        },
+        "articulos_embedding_idx": {
+          "name": "articulos_embedding_idx",
+          "columns": [
+            {
+              "expression": "embedding",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "vector_cosine_ops"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "hnsw",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "articulos_ley_id_leyes_id_fk": {
+          "name": "articulos_ley_id_leyes_id_fk",
+          "tableFrom": "articulos",
+          "columnsFrom": [
+            "ley_id"
+          ],
+          "tableTo": "leyes",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "articulos_reforma_id_reformas_id_fk": {
+          "name": "articulos_reforma_id_reformas_id_fk",
+          "tableFrom": "articulos",
+          "columnsFrom": [
+            "reforma_id"
+          ],
+          "tableTo": "reformas",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "articulos_solo_publicados": {
+          "name": "articulos_solo_publicados",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "faro_app"
+          ],
+          "using": "estado = 'publicado'"
+        }
+      },
+      "checkConstraints": {
+        "articulos_estado_valido": {
+          "name": "articulos_estado_valido",
+          "value": "\"articulos\".\"estado\" in ('pendiente', 'publicado', 'rechazado')"
+        },
+        "articulos_intervalo_valido": {
+          "name": "articulos_intervalo_valido",
+          "value": "\"articulos\".\"vigente_hasta\" is null or \"articulos\".\"vigente_hasta\" > \"articulos\".\"vigente_desde\""
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "public.fuentes_noticias": {
+      "name": "fuentes_noticias",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "tipo": {
+          "name": "tipo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "nombre": {
+          "name": "nombre",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "url": {
+          "name": "url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "activa": {
+          "name": "activa",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "fuentes_noticias_url_unique": {
+          "name": "fuentes_noticias_url_unique",
+          "columns": [
+            "url"
+          ],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "fuentes_tipo_valido": {
+          "name": "fuentes_tipo_valido",
+          "value": "\"fuentes_noticias\".\"tipo\" in ('dof', 'sat', 'gaceta', 'rss')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.leyes": {
+      "name": "leyes",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "codigo": {
+          "name": "codigo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "nombre": {
+          "name": "nombre",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "abreviatura": {
+          "name": "abreviatura",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ambito": {
+          "name": "ambito",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'federal'"
+        },
+        "entidad": {
+          "name": "entidad",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "fuente_url": {
+          "name": "fuente_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ultima_reforma_dof": {
+          "name": "ultima_reforma_dof",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "texto_sha256": {
+          "name": "texto_sha256",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "actualizada_en": {
+          "name": "actualizada_en",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "leyes_codigo_unique": {
+          "name": "leyes_codigo_unique",
+          "columns": [
+            "codigo"
+          ],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "leyes_ambito_valido": {
+          "name": "leyes_ambito_valido",
+          "value": "\"leyes\".\"ambito\" in ('federal', 'estatal')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.noticias": {
+      "name": "noticias",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "fuente_id": {
+          "name": "fuente_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "titulo": {
+          "name": "titulo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "url": {
+          "name": "url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fecha": {
+          "name": "fecha",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "resumen": {
+          "name": "resumen",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tags": {
+          "name": "tags",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::text[]"
+        },
+        "es_iniciativa": {
+          "name": "es_iniciativa",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "creada_en": {
+          "name": "creada_en",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "noticias_fecha_idx": {
+          "name": "noticias_fecha_idx",
+          "columns": [
+            {
+              "expression": "fecha",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "noticias_tags_idx": {
+          "name": "noticias_tags_idx",
+          "columns": [
+            {
+              "expression": "tags",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "gin",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "noticias_fuente_id_fuentes_noticias_id_fk": {
+          "name": "noticias_fuente_id_fuentes_noticias_id_fk",
+          "tableFrom": "noticias",
+          "columnsFrom": [
+            "fuente_id"
+          ],
+          "tableTo": "fuentes_noticias",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "noticias_url_unique": {
+          "name": "noticias_url_unique",
+          "columns": [
+            "url"
+          ],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.reformas": {
+      "name": "reformas",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "ley_id": {
+          "name": "ley_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fecha_dof": {
+          "name": "fecha_dof",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "url_dof": {
+          "name": "url_dof",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "resumen": {
+          "name": "resumen",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "diff": {
+          "name": "diff",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "estado": {
+          "name": "estado",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pendiente'"
+        },
+        "revisada_por": {
+          "name": "revisada_por",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "revisada_en": {
+          "name": "revisada_en",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "creada_en": {
+          "name": "creada_en",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "reformas_ley_fecha_idx": {
+          "name": "reformas_ley_fecha_idx",
+          "columns": [
+            {
+              "expression": "ley_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "fecha_dof",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "reformas_ley_id_leyes_id_fk": {
+          "name": "reformas_ley_id_leyes_id_fk",
+          "tableFrom": "reformas",
+          "columnsFrom": [
+            "ley_id"
+          ],
+          "tableTo": "leyes",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "reformas_solo_aprobadas": {
+          "name": "reformas_solo_aprobadas",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "faro_app"
+          ],
+          "using": "estado = 'aprobada'"
+        }
+      },
+      "checkConstraints": {
+        "reformas_estado_valido": {
+          "name": "reformas_estado_valido",
+          "value": "\"reformas\".\"estado\" in ('pendiente', 'aprobada', 'rechazada')"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "public.alertas": {
+      "name": "alertas",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "org_id": {
+          "name": "org_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "reforma_id": {
+          "name": "reforma_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "articulos_afectados": {
+          "name": "articulos_afectados",
+          "type": "uuid[]",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::uuid[]"
+        },
+        "leida": {
+          "name": "leida",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "creada_en": {
+          "name": "creada_en",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "alertas_org_id_organizaciones_id_fk": {
+          "name": "alertas_org_id_organizaciones_id_fk",
+          "tableFrom": "alertas",
+          "columnsFrom": [
+            "org_id"
+          ],
+          "tableTo": "organizaciones",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "alertas_reforma_id_reformas_id_fk": {
+          "name": "alertas_reforma_id_reformas_id_fk",
+          "tableFrom": "alertas",
+          "columnsFrom": [
+            "reforma_id"
+          ],
+          "tableTo": "reformas",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "alertas_org_reforma_uq": {
+          "name": "alertas_org_reforma_uq",
+          "columns": [
+            "org_id",
+            "reforma_id"
+          ],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {
+        "alertas_aislamiento_org": {
+          "name": "alertas_aislamiento_org",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": [
+            "faro_app"
+          ],
+          "using": "org_id = nullif(current_setting('app.org_id', true), '')::uuid",
+          "withCheck": "org_id = nullif(current_setting('app.org_id', true), '')::uuid"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "public.conversaciones": {
+      "name": "conversaciones",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "org_id": {
+          "name": "org_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "usuario_id": {
+          "name": "usuario_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "titulo": {
+          "name": "titulo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "creada_en": {
+          "name": "creada_en",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "conversaciones_org_idx": {
+          "name": "conversaciones_org_idx",
+          "columns": [
+            {
+              "expression": "org_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "creada_en",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "conversaciones_org_id_organizaciones_id_fk": {
+          "name": "conversaciones_org_id_organizaciones_id_fk",
+          "tableFrom": "conversaciones",
+          "columnsFrom": [
+            "org_id"
+          ],
+          "tableTo": "organizaciones",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "conversaciones_usuario_id_usuarios_id_fk": {
+          "name": "conversaciones_usuario_id_usuarios_id_fk",
+          "tableFrom": "conversaciones",
+          "columnsFrom": [
+            "usuario_id"
+          ],
+          "tableTo": "usuarios",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "conversaciones_aislamiento_org": {
+          "name": "conversaciones_aislamiento_org",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": [
+            "faro_app"
+          ],
+          "using": "org_id = nullif(current_setting('app.org_id', true), '')::uuid",
+          "withCheck": "org_id = nullif(current_setting('app.org_id', true), '')::uuid"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "public.digests": {
+      "name": "digests",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "org_id": {
+          "name": "org_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "semana": {
+          "name": "semana",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "contenido": {
+          "name": "contenido",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "items": {
+          "name": "items",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'[]'::jsonb"
+        },
+        "enviado_en": {
+          "name": "enviado_en",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "creado_en": {
+          "name": "creado_en",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "digests_org_id_organizaciones_id_fk": {
+          "name": "digests_org_id_organizaciones_id_fk",
+          "tableFrom": "digests",
+          "columnsFrom": [
+            "org_id"
+          ],
+          "tableTo": "organizaciones",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "digests_org_semana_uq": {
+          "name": "digests_org_semana_uq",
+          "columns": [
+            "org_id",
+            "semana"
+          ],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {
+        "digests_aislamiento_org": {
+          "name": "digests_aislamiento_org",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": [
+            "faro_app"
+          ],
+          "using": "org_id = nullif(current_setting('app.org_id', true), '')::uuid",
+          "withCheck": "org_id = nullif(current_setting('app.org_id', true), '')::uuid"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "public.documentos_osc": {
+      "name": "documentos_osc",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "org_id": {
+          "name": "org_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "nombre": {
+          "name": "nombre",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tipo": {
+          "name": "tipo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'otro'"
+        },
+        "creado_en": {
+          "name": "creado_en",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "documentos_osc_org_idx": {
+          "name": "documentos_osc_org_idx",
+          "columns": [
+            {
+              "expression": "org_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "documentos_osc_org_id_organizaciones_id_fk": {
+          "name": "documentos_osc_org_id_organizaciones_id_fk",
+          "tableFrom": "documentos_osc",
+          "columnsFrom": [
+            "org_id"
+          ],
+          "tableTo": "organizaciones",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "documentos_osc_aislamiento_org": {
+          "name": "documentos_osc_aislamiento_org",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": [
+            "faro_app"
+          ],
+          "using": "org_id = nullif(current_setting('app.org_id', true), '')::uuid",
+          "withCheck": "org_id = nullif(current_setting('app.org_id', true), '')::uuid"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "public.fragmentos_osc": {
+      "name": "fragmentos_osc",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "org_id": {
+          "name": "org_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "documento_id": {
+          "name": "documento_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "orden": {
+          "name": "orden",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "texto": {
+          "name": "texto",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "embedding": {
+          "name": "embedding",
+          "type": "vector(1024)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "embedding_modelo": {
+          "name": "embedding_modelo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "fragmentos_osc_org_idx": {
+          "name": "fragmentos_osc_org_idx",
+          "columns": [
+            {
+              "expression": "org_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "fragmentos_embedding_idx": {
+          "name": "fragmentos_embedding_idx",
+          "columns": [
+            {
+              "expression": "embedding",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "vector_cosine_ops"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "hnsw",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "fragmentos_osc_org_id_organizaciones_id_fk": {
+          "name": "fragmentos_osc_org_id_organizaciones_id_fk",
+          "tableFrom": "fragmentos_osc",
+          "columnsFrom": [
+            "org_id"
+          ],
+          "tableTo": "organizaciones",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "fragmentos_osc_documento_id_documentos_osc_id_fk": {
+          "name": "fragmentos_osc_documento_id_documentos_osc_id_fk",
+          "tableFrom": "fragmentos_osc",
+          "columnsFrom": [
+            "documento_id"
+          ],
+          "tableTo": "documentos_osc",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "fragmentos_doc_orden_uq": {
+          "name": "fragmentos_doc_orden_uq",
+          "columns": [
+            "documento_id",
+            "orden"
+          ],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {
+        "fragmentos_osc_aislamiento_org": {
+          "name": "fragmentos_osc_aislamiento_org",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": [
+            "faro_app"
+          ],
+          "using": "org_id = nullif(current_setting('app.org_id', true), '')::uuid",
+          "withCheck": "org_id = nullif(current_setting('app.org_id', true), '')::uuid"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "public.mensajes": {
+      "name": "mensajes",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "org_id": {
+          "name": "org_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "conversacion_id": {
+          "name": "conversacion_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "rol": {
+          "name": "rol",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "contenido": {
+          "name": "contenido",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "citas": {
+          "name": "citas",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'[]'::jsonb"
+        },
+        "creado_en": {
+          "name": "creado_en",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "mensajes_conversacion_idx": {
+          "name": "mensajes_conversacion_idx",
+          "columns": [
+            {
+              "expression": "conversacion_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "creado_en",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "mensajes_org_id_organizaciones_id_fk": {
+          "name": "mensajes_org_id_organizaciones_id_fk",
+          "tableFrom": "mensajes",
+          "columnsFrom": [
+            "org_id"
+          ],
+          "tableTo": "organizaciones",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "mensajes_conversacion_id_conversaciones_id_fk": {
+          "name": "mensajes_conversacion_id_conversaciones_id_fk",
+          "tableFrom": "mensajes",
+          "columnsFrom": [
+            "conversacion_id"
+          ],
+          "tableTo": "conversaciones",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "mensajes_aislamiento_org": {
+          "name": "mensajes_aislamiento_org",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": [
+            "faro_app"
+          ],
+          "using": "org_id = nullif(current_setting('app.org_id', true), '')::uuid",
+          "withCheck": "org_id = nullif(current_setting('app.org_id', true), '')::uuid"
+        }
+      },
+      "checkConstraints": {
+        "mensajes_rol_valido": {
+          "name": "mensajes_rol_valido",
+          "value": "\"mensajes\".\"rol\" in ('user', 'assistant')"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "public.miembros": {
+      "name": "miembros",
+      "schema": "",
+      "columns": {
+        "org_id": {
+          "name": "org_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "usuario_id": {
+          "name": "usuario_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "rol": {
+          "name": "rol",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'miembro'"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "miembros_org_id_organizaciones_id_fk": {
+          "name": "miembros_org_id_organizaciones_id_fk",
+          "tableFrom": "miembros",
+          "columnsFrom": [
+            "org_id"
+          ],
+          "tableTo": "organizaciones",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "miembros_usuario_id_usuarios_id_fk": {
+          "name": "miembros_usuario_id_usuarios_id_fk",
+          "tableFrom": "miembros",
+          "columnsFrom": [
+            "usuario_id"
+          ],
+          "tableTo": "usuarios",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {
+        "miembros_org_id_usuario_id_pk": {
+          "name": "miembros_org_id_usuario_id_pk",
+          "columns": [
+            "org_id",
+            "usuario_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "miembros_aislamiento_org": {
+          "name": "miembros_aislamiento_org",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": [
+            "faro_app"
+          ],
+          "using": "org_id = nullif(current_setting('app.org_id', true), '')::uuid",
+          "withCheck": "org_id = nullif(current_setting('app.org_id', true), '')::uuid"
+        }
+      },
+      "checkConstraints": {
+        "miembros_rol_valido": {
+          "name": "miembros_rol_valido",
+          "value": "\"miembros\".\"rol\" in ('admin_osc', 'miembro')"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "public.organizaciones": {
+      "name": "organizaciones",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "nombre": {
+          "name": "nombre",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "figura_juridica": {
+          "name": "figura_juridica",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "entidad": {
+          "name": "entidad",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "actividades_art79": {
+          "name": "actividades_art79",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::text[]"
+        },
+        "es_donataria": {
+          "name": "es_donataria",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "cluni": {
+          "name": "cluni",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "rango_ingresos": {
+          "name": "rango_ingresos",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "instrucciones": {
+          "name": "instrucciones",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "guardar_conversaciones": {
+          "name": "guardar_conversaciones",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "creada_en": {
+          "name": "creada_en",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "organizaciones_aislamiento_org": {
+          "name": "organizaciones_aislamiento_org",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": [
+            "faro_app"
+          ],
+          "using": "id = nullif(current_setting('app.org_id', true), '')::uuid",
+          "withCheck": "id = nullif(current_setting('app.org_id', true), '')::uuid"
+        }
+      },
+      "checkConstraints": {
+        "org_figura_valida": {
+          "name": "org_figura_valida",
+          "value": "\"organizaciones\".\"figura_juridica\" in ('AC', 'IAP', 'SC', 'ABP', 'otra')"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "public.preferencias_digest": {
+      "name": "preferencias_digest",
+      "schema": "",
+      "columns": {
+        "org_id": {
+          "name": "org_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "activo": {
+          "name": "activo",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "dia": {
+          "name": "dia",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "destinatarios": {
+          "name": "destinatarios",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::text[]"
+        },
+        "secciones": {
+          "name": "secciones",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{reformas,iniciativas,noticias}'::text[]"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "preferencias_digest_org_id_organizaciones_id_fk": {
+          "name": "preferencias_digest_org_id_organizaciones_id_fk",
+          "tableFrom": "preferencias_digest",
+          "columnsFrom": [
+            "org_id"
+          ],
+          "tableTo": "organizaciones",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "preferencias_digest_aislamiento_org": {
+          "name": "preferencias_digest_aislamiento_org",
+          "as": "PERMISSIVE",
+          "for": "ALL",
+          "to": [
+            "faro_app"
+          ],
+          "using": "org_id = nullif(current_setting('app.org_id', true), '')::uuid",
+          "withCheck": "org_id = nullif(current_setting('app.org_id', true), '')::uuid"
+        }
+      },
+      "checkConstraints": {
+        "pref_digest_dia_valido": {
+          "name": "pref_digest_dia_valido",
+          "value": "\"preferencias_digest\".\"dia\" between 1 and 7"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "public.usuarios": {
+      "name": "usuarios",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "nombre": {
+          "name": "nombre",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "es_admin_plataforma": {
+          "name": "es_admin_plataforma",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "creado_en": {
+          "name": "creado_en",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "usuarios_email_unique": {
+          "name": "usuarios_email_unique",
+          "columns": [
+            "email"
+          ],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "views": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}
