@@ -1,5 +1,7 @@
-import { descargarIndice, descargarPdfLey } from "./diputados/cliente.js";
+import { writeFile } from "node:fs/promises";
+import { descargarDecretos, descargarIndice, descargarPdfLey } from "./diputados/cliente.js";
 import { procesarPdfLey } from "./diputados/ingesta.js";
+import { etiquetarArticulo } from "./etiquetas.js";
 import { LEYES_MVP } from "./leyes-mvp.js";
 
 /** Avisos que apuntan a un parseo defectuoso: números repetidos o articulado casi vacío. */
@@ -28,6 +30,36 @@ async function main(): Promise<number> {
     return 0;
   }
 
+  if (comando === "exportar") {
+    const [salida, ...pedidas] = args;
+    if (!salida) {
+      console.error("Uso: corpus exportar <archivo.json> [CODIGO...]");
+      return 2;
+    }
+    const indice = new Map((await descargarIndice()).map((l) => [l.codigo, l]));
+    const leyes = [];
+    for (const codigo of pedidas.length ? pedidas : [...LEYES_MVP]) {
+      const ley = indice.get(codigo);
+      if (!ley) throw new Error(`${codigo} no aparece en el índice de Diputados`);
+      const { articulos } = await procesarPdfLey(await descargarPdfLey(codigo));
+      const avisos = chequear(articulos);
+      if (avisos.length) throw new Error(`${codigo}: ${avisos.join("; ")}; no se exporta un parseo dudoso`);
+      const decretos = await descargarDecretos(ley).catch(() => []);
+      leyes.push({
+        codigo,
+        nombre: ley.nombre,
+        fuenteUrl: `https://www.diputados.gob.mx/LeyesBiblio/pdf/${codigo}.pdf`,
+        ultimaReforma: ley.ultimaReforma,
+        urlDecreto: decretos.find((d) => d.fecha === ley.ultimaReforma)?.url ?? null,
+        articulos: articulos.map((a) => ({ numero: a.numero, texto: a.texto, tags: etiquetarArticulo(codigo, a.texto) })),
+      });
+      console.log(`${codigo.padEnd(9)} ${articulos.length} artículos`);
+    }
+    await writeFile(salida, JSON.stringify({ generadoEn: new Date().toISOString().slice(0, 10), leyes }));
+    console.log(`Escrito ${salida}`);
+    return 0;
+  }
+
   if (comando === "ingest") {
     const codigos = args.length ? args : [...LEYES_MVP];
     let fallo = false;
@@ -44,7 +76,7 @@ async function main(): Promise<number> {
     return fallo ? 1 : 0;
   }
 
-  console.error("Uso: corpus indice | corpus ingest [CODIGO...]");
+  console.error("Uso: corpus indice | corpus ingest [CODIGO...] | corpus exportar <archivo.json> [CODIGO...]");
   return 2;
 }
 

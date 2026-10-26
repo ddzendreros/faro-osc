@@ -6,11 +6,31 @@ const USER_AGENT = "faro-osc/0.0 (corpus legal abierto para OSC)";
 
 type Fetch = typeof fetch;
 
+const INTENTOS = 3;
+const esperar = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+
+/**
+ * El sitio de Diputados corta conexiones de vez en cuando ("terminated") y a veces responde 5xx:
+ * se reintenta con espera creciente. Un 4xx (p. ej. 404) no se reintenta, no se arregla solo.
+ */
 async function descargar(url: string, f: Fetch): Promise<Uint8Array> {
-  const res = await f(url, { headers: { "user-agent": USER_AGENT } });
-  if (!res.ok) throw new Error(`Diputados respondió ${res.status} para ${url}`);
-  return new Uint8Array(await res.arrayBuffer());
+  let ultimoError: unknown;
+  for (let i = 0; i < INTENTOS; i++) {
+    try {
+      const res = await f(url, { headers: { "user-agent": USER_AGENT } });
+      if (res.ok) return new Uint8Array(await res.arrayBuffer());
+      if (res.status < 500) throw new ErrorNoReintentable(`Diputados respondió ${res.status} para ${url}`);
+      ultimoError = new Error(`Diputados respondió ${res.status} para ${url}`);
+    } catch (e) {
+      if (e instanceof ErrorNoReintentable) throw e;
+      ultimoError = e;
+    }
+    if (i < INTENTOS - 1) await esperar(1000 * 2 ** i);
+  }
+  throw new Error(`No se pudo descargar ${url} tras ${INTENTOS} intentos: ${ultimoError instanceof Error ? ultimoError.message : ultimoError}`);
 }
+
+class ErrorNoReintentable extends Error {}
 
 export async function descargarIndice(f: Fetch = fetch): Promise<LeyIndice[]> {
   const html = decodificarHtmlDiputados(await descargar(`${BASE}index.htm`, f));
