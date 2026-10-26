@@ -67,6 +67,13 @@ describe("carga inicial", () => {
     expect(ley?.textoSha256).toBe(entrada(V1, FECHA_INICIAL).textoSha256);
   });
 
+  it("etiqueta los artículos para poder cruzarlos con el perfil de cada OSC", async () => {
+    const arts = [art("1", "Las donatarias autorizadas para recibir donativos deducibles."), art("2", "Texto neutro")];
+    await ingestarLey(db, entrada(arts, FECHA_INICIAL));
+    const filas = await db.select().from(articulos).orderBy(asc(articulos.numero));
+    expect(filas.map((a) => a.tags)).toEqual([["donataria", "donativos"], []]);
+  });
+
   it("no inventa versiones anteriores a la fecha de vigencia", async () => {
     await ingestarLey(db, entrada(V1, FECHA_INICIAL));
     expect(await textoEn("1", "2020-01-01")).toBeNull();
@@ -108,6 +115,13 @@ describe("reforma: nada se publica sin aprobación", () => {
       modificados: [{ numero: "2", anterior: "Texto dos", nuevo: "Texto dos REFORMADO" }],
       eliminados: [{ numero: "3" }],
     });
+  });
+
+  it("guarda el enlace al decreto para que quien revise vaya a la fuente", async () => {
+    await ingestarLey(db, entrada(V1, FECHA_INICIAL));
+    await ingestarLey(db, { ...entrada(V2, FECHA_REFORMA), urlReforma: "https://example.test/decreto.pdf" });
+    const [reforma] = await db.select().from(reformas);
+    expect(reforma?.urlDof).toBe("https://example.test/decreto.pdf");
   });
 
   it("mientras está pendiente, la vigencia publicada no cambia", async () => {

@@ -1,4 +1,4 @@
-import { diffVersiones, huellaArticulo, type ArticuloParseado } from "@faro/corpus";
+import { diffVersiones, etiquetarArticulo, huellaArticulo, type ArticuloParseado } from "@faro/corpus";
 import { schema } from "@faro/db";
 import { and, eq, inArray, isNull } from "drizzle-orm";
 import type { ExtractTablesWithRelations } from "drizzle-orm";
@@ -26,6 +26,11 @@ export interface EntradaLey {
    */
   fechaVigencia: string;
   articulos: ArticuloParseado[];
+  /**
+   * Decreto de la reforma (PDF oficial) para que quien revise pueda ir a la fuente. Es opcional:
+   * no bloquea la ingesta si no se encuentra.
+   */
+  urlReforma?: string;
   /** Hash del texto limpio completo (de @faro/corpus procesarPdfLey). */
   textoSha256: string;
 }
@@ -83,6 +88,7 @@ export async function ingestarLey<Q extends PgQueryResultHKT>(db: Db<Q>, e: Entr
             texto: a.texto,
             textoSha256: huellaArticulo(a.texto),
             vigenteDesde: e.fechaVigencia,
+            tags: etiquetarArticulo(e.codigo, a.texto),
           })),
         ),
       );
@@ -112,7 +118,7 @@ export async function ingestarLey<Q extends PgQueryResultHKT>(db: Db<Q>, e: Entr
 
     const [reforma] = await tx
       .insert(reformas)
-      .values({ leyId: ley.id, fechaDof: e.fechaVigencia, urlDof: null, diff })
+      .values({ leyId: ley.id, fechaDof: e.fechaVigencia, urlDof: e.urlReforma ?? null, diff })
       .returning({ id: reformas.id });
     if (!reforma) throw new Error("No se pudo crear la reforma");
 
@@ -127,6 +133,7 @@ export async function ingestarLey<Q extends PgQueryResultHKT>(db: Db<Q>, e: Entr
           vigenteDesde: e.fechaVigencia,
           estado: "pendiente",
           reformaId: reforma.id,
+          tags: etiquetarArticulo(e.codigo, a.texto),
         })),
       ),
     );

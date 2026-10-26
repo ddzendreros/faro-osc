@@ -1,11 +1,14 @@
-import { descargarIndice, descargarPdfLey, LEYES_MVP, procesarPdfLey } from "@faro/corpus";
+import { descargarDecretos, descargarIndice, descargarPdfLey, LEYES_MVP, procesarPdfLey } from "@faro/corpus";
 import { crearDb, schema } from "@faro/db";
+import { embeddingsDesdeEnv } from "@faro/providers";
 import { eq } from "drizzle-orm";
+import { embeberPendientes } from "./embeber.js";
 import { ingestarLey } from "./ingestar.js";
 import { aprobarReforma, rechazarReforma } from "./revision.js";
 
 const USO = `Uso (requiere DATABASE_URL con el rol dueño de las tablas, no faro_app):
   ingest [CODIGO...]   Descarga las leyes de Diputados y las lleva a la base (por defecto, las del MVP)
+  embeber              Calcula los embeddings que falten (EMBEDDINGS_BASE_URL, EMBEDDINGS_MODEL, EMBEDDINGS_DIMS; por defecto Ollama + bge-m3)
   pendientes           Lista las reformas esperando revisión
   aprobar <reformaId>  Publica una reforma pendiente
   rechazar <reformaId> Descarta una reforma pendiente`;
@@ -13,7 +16,7 @@ const USO = `Uso (requiere DATABASE_URL con el rol dueño de las tablas, no faro
 async function main(): Promise<number> {
   const url = process.env.DATABASE_URL;
   const [comando, ...args] = process.argv.slice(2);
-  if (!comando || !["ingest", "pendientes", "aprobar", "rechazar"].includes(comando)) {
+  if (!comando || !["ingest", "embeber", "pendientes", "aprobar", "rechazar"].includes(comando)) {
     console.error(USO);
     return 2;
   }
@@ -23,6 +26,13 @@ async function main(): Promise<number> {
   }
   const { db, cerrar } = crearDb(url);
   try {
+    if (comando === "embeber") {
+      const proveedor = embeddingsDesdeEnv();
+      console.log(`Embeddings con ${proveedor.modelo} (${proveedor.dimensiones} dimensiones)…`);
+      console.log(`${await embeberPendientes(db, proveedor)} artículos procesados`);
+      return 0;
+    }
+
     if (comando === "pendientes") {
       const filas = await db
         .select({ id: schema.reformas.id, ley: schema.leyes.abreviatura, fecha: schema.reformas.fechaDof, diff: schema.reformas.diff })
@@ -58,12 +68,15 @@ async function main(): Promise<number> {
         const fechaVigencia = ley.ultimaReforma ?? ley.publicadaDof;
         if (!fechaVigencia) throw new Error("el índice no trae fecha de reforma ni de publicación");
         const { articulos, sha256 } = await procesarPdfLey(await descargarPdfLey(codigo));
+        // Solo informativo: si la página de historial falla, la ingesta sigue sin enlace al decreto.
+        const decretos = await descargarDecretos(ley).catch(() => []);
         const r = await ingestarLey(db, {
           codigo,
           nombre: ley.nombre,
           abreviatura: /^\d+$/.test(codigo) ? ley.nombre : codigo,
           fuenteUrl: `https://www.diputados.gob.mx/LeyesBiblio/pdf/${codigo}.pdf`,
           fechaVigencia,
+          urlReforma: decretos.find((d) => d.fecha === fechaVigencia)?.url,
           articulos,
           textoSha256: sha256,
         });
