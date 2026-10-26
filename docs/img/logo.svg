@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Faro OSC">
+  <rect width="128" height="128" rx="28" fill="#10262e"/>
+  <g transform="translate(19.2 21) scale(3.2)">
+    <path d="M10 25 12 11h4l2 14z" fill="#f4f7f6"/>
+    <rect x="11.2" y="5.5" width="5.6" height="5.5" fill="#f3c53c"/>
+    <path d="M9.5 5.5 14 1.8l4.5 3.7z" fill="#f4f7f6"/>
+    <path d="M11.6 16h4.8M11 20.5h6" stroke="#10262e" stroke-width="1.5"/>
+  </g>
+</svg>

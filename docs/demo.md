@@ -48,7 +48,7 @@ Decisiones abiertas antes de construirla:
 ## Etapa 2: organizaciones reales
 
 - Postgres con pgvector (Neon desde el Marketplace de Vercel) y el esquema de `packages/db`.
-- `pnpm --filter @faro/ingesta ingest` y `embeber` para cargar leyes y vectores.
+- `pnpm --filter @faro/ingesta cli ingest` y `cli embeber` para cargar leyes y vectores.
 - Inicio de sesión por enlace al correo; la app se conecta como `faro_app` (sujeta a RLS) y el alta de
   organizaciones usa una conexión privilegiada aparte.
 - Perfil de la organización y subida de documentos propios (acta, estatutos).
