@@ -1,0 +1,19 @@
+{
+  "name": "faro-osc",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Agente legal open source para organizaciones de la sociedad civil en México",
+  "license": "AGPL-3.0-or-later",
+  "packageManager": "pnpm@11.21.0",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.0",
+    "typescript": "^5.8.0"
+  }
+}
