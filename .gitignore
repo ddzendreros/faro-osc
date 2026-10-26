@@ -6,3 +6,8 @@ dist/
 .env.*
 !.env.example
 *.log
+
+.vercel
+.playwright-mcp/
+next-env.d.ts
+*.tsbuildinfo
