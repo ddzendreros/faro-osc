@@ -27,6 +27,11 @@ describe("parseIndiceDiputados (fixture real de Diputados)", () => {
     expect(porCodigo("CFF")?.ultimaReforma).toMatch(/^\d{4}-\d{2}-\d{2}$/);
   });
 
+  it("conserva la página de historial de cada ley", () => {
+    expect(porCodigo("LFFAOSC")?.refPagina).toBe("ref/lffaosc.htm");
+    expect(porCodigo("LISR")?.refPagina).toBe("ref/lisr.htm");
+  });
+
   it("devuelve ultimaReforma null cuando dice 'Sin reforma' (ley cuyo PDF es pdf/79.pdf, no una sigla)", () => {
     expect(porCodigo("79")?.ultimaReforma).toBeNull();
   });

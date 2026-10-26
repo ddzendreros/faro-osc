@@ -1,3 +1,4 @@
+import { parseDecretosRef, type DecretoReforma } from "./decretos.js";
 import { decodificarHtmlDiputados, parseIndiceDiputados, type LeyIndice } from "./indice.js";
 
 const BASE = "https://www.diputados.gob.mx/LeyesBiblio/";
@@ -19,6 +20,13 @@ export async function descargarIndice(f: Fetch = fetch): Promise<LeyIndice[]> {
     throw new Error(`El índice de Diputados devolvió solo ${leyes.length} leyes; ¿cambió el formato?`);
   }
   return leyes;
+}
+
+/** Decretos (publicación original y reformas) de una ley, del más reciente al más antiguo. */
+export async function descargarDecretos(ley: Pick<LeyIndice, "refPagina">, f: Fetch = fetch): Promise<DecretoReforma[]> {
+  if (!/^ref\/[A-Za-z0-9_]+\.htm$/.test(ley.refPagina)) throw new Error(`Página de historial inválida: ${ley.refPagina}`);
+  const html = decodificarHtmlDiputados(await descargar(BASE + ley.refPagina, f));
+  return parseDecretosRef(html, ley.refPagina);
 }
 
 export async function descargarPdfLey(codigo: string, f: Fetch = fetch): Promise<Uint8Array> {

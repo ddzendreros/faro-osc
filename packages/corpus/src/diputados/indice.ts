@@ -2,6 +2,8 @@ export interface LeyIndice {
   /** Nombre del archivo PDF en Diputados: casi siempre una sigla ("LFFAOSC") pero a veces numérico ("79"). */
   codigo: string;
   nombre: string;
+  /** Página de historial de reformas, relativa a LeyesBiblio/: "ref/lffaosc.htm". */
+  refPagina: string;
   /** Fecha de publicación original en el DOF (YYYY-MM-DD). */
   publicadaDof: string | null;
   /** Fecha de la última reforma en el DOF (YYYY-MM-DD); null si "Sin reforma". */
@@ -45,12 +47,15 @@ export function parseIndiceDiputados(html: string): LeyIndice[] {
     const [, celdaNombre, celdaReforma, celdaEnlaces] = celdas as [string, string, string, string];
 
     const codigo = /href="pdf\/([A-Za-z0-9_]+)\.pdf"/i.exec(celdaEnlaces)?.[1];
-    const enlaceNombre = /<a\b[^>]*href="ref\/[^"]+"[^>]*>([\s\S]*?)<\/a>/i.exec(celdaNombre)?.[1];
-    if (!codigo || !enlaceNombre) continue;
+    const enlace = /<a\b[^>]*href="(ref\/[^"]+)"[^>]*>([\s\S]*?)<\/a>/i.exec(celdaNombre);
+    const refPagina = enlace?.[1];
+    const enlaceNombre = enlace?.[2];
+    if (!codigo || !refPagina || !enlaceNombre) continue;
 
     leyes.push({
       codigo,
       nombre: textoPlano(enlaceNombre),
+      refPagina,
       publicadaDof: fechaDof(celdaNombre),
       ultimaReforma: fechaDof(celdaReforma),
     });
